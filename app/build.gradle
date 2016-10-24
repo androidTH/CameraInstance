@@ -1,0 +1,45 @@
+apply plugin: 'com.android.application'
+apply plugin: 'com.neenbedankt.android-apt'
+apply plugin: 'me.tatarka.retrolambda'
+
+android {
+    compileSdkVersion 24
+    buildToolsVersion "24.0.2"
+    defaultConfig {
+        applicationId "com.xdandroid.hellocamera2"
+        minSdkVersion 14
+        targetSdkVersion 24
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    lintOptions {
+        disable 'MissingTranslation'
+    }
+    compileOptions {
+        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+repositories {
+    jcenter()
+    mavenCentral()
+    maven { url "https://jitpack.io" }
+}
+
+dependencies {
+    compile 'com.android.support:appcompat-v7:+'
+    compile 'com.android.support:design:+'
+    compile 'com.zhy:autolayout:+'
+    compile 'com.facebook.fresco:fresco:+'
+    compile 'com.jakewharton:butterknife:+'
+    apt 'com.jakewharton:butterknife-compiler:+'
+    compile 'com.jakewharton.rxbinding:rxbinding:+'
+    compile 'com.github.ParkSangGwon:TedPermission:+'
+}
