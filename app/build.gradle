@@ -42,4 +42,5 @@ dependencies {
     apt 'com.jakewharton:butterknife-compiler:+'
     compile 'com.jakewharton.rxbinding:rxbinding:+'
     compile 'com.github.ParkSangGwon:TedPermission:+'
+    compile 'com.nineoldandroids:library:2.4.0'
 }

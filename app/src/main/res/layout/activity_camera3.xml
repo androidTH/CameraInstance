@@ -116,7 +116,6 @@
                         android:layout_height="3dp"
                         android:layout_gravity="bottom|right"
                         android:background="@color/colorPrimary"/>
-
                 </FrameLayout>
                 <RelativeLayout
                     android:layout_width="match_parent"

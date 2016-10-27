@@ -1,6 +1,8 @@
 package com.xdandroid.hellocamera2;
 
 import android.hardware.Camera;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -15,6 +17,7 @@ import android.widget.TextView;
 import com.xdandroid.hellocamera2.app.App;
 import com.xdandroid.hellocamera2.app.BaseCameraActivity;
 import com.xdandroid.hellocamera2.camera.CameraTextureView;
+import com.xdandroid.hellocamera2.camera.RectOnCamera;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -38,6 +41,8 @@ public class Camera3Activity extends BaseCameraActivity {
     public CameraTextureView mCameraTextureView;
     @BindView(R.id.topview)
     public View mTopView;
+//    @BindView(R.id.rectOnCamera)
+//    public RectOnCamera mRectOnCamera;
 //    @BindView(R.id.iv_camera_switch)
 //    public ImageView mIvCameraSwitch;
 
@@ -58,6 +63,8 @@ public class Camera3Activity extends BaseCameraActivity {
      * finish()是否已调用过
      */
     private volatile boolean finishCalled;
+
+    private ToneGenerator tone;
 
 
     @Override
@@ -82,7 +89,17 @@ public class Camera3Activity extends BaseCameraActivity {
         ivCameraButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-               mCameraTextureView.cameraInstance().getCameraDevice().takePicture(null, null, new Camera.PictureCallback() {
+               mCameraTextureView.cameraInstance().getCameraDevice().takePicture(new Camera.ShutterCallback() {
+                   @Override
+                   public void onShutter() {
+                       if(tone == null){
+                           //发出提示用户的声音
+                           tone = new ToneGenerator(AudioManager.STREAM_MUSIC,
+                                   ToneGenerator.MAX_VOLUME);
+                       }
+                       tone.startTone(ToneGenerator.TONE_PROP_BEEP2);//TONE_PROP_NACK
+                   }
+               }, null, new Camera.PictureCallback() {
                    @Override
                    public void onPictureTaken(byte[] data, Camera camera) {
                        try {
@@ -91,7 +108,8 @@ public class Camera3Activity extends BaseCameraActivity {
                            fos.write(data);
                            try {
                                fos.close();
-                           } catch (Exception ignored) {}
+                           } catch (Exception ignored) {
+                           }
                        } catch (Exception e) {
                            e.printStackTrace();
                        }

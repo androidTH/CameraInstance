@@ -292,7 +292,8 @@ public class MainActivity extends BaseActivity implements ActivityCompat.OnReque
     protected void onResume() {
         super.onResume();
 //        checkPermission();
-        Log.i("Path",App.app.getCacheDir()+"路径"+Environment.getExternalStorageDirectory());
+        Log.i("Path",App.app.getCacheDir()+"路径"+Environment.getExternalStorageDirectory().getPath()+
+                "路径"+getExternalCacheDir().getPath()+"路径"+getCacheDir().getPath()+"路径="+getFilesDir());
     }
 
     @Override

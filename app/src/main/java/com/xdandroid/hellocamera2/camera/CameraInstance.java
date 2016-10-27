@@ -222,7 +222,10 @@ public class CameraInstance {
         if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
             mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);//自动聚焦
         }
+
         mParams.setPreviewFrameRate(DEFAULT_PREVIEW_RATE); //设置相机预览帧率
+
+        mParams.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);//自动感应是否需要闪光灯
 
         try {
             mCameraDevice.setParameters(mParams);
