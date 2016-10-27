@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.*;
 import android.support.v7.app.*;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
 
@@ -146,46 +147,6 @@ public class MainActivity extends BaseActivity implements ActivityCompat.OnReque
                         public void onPermissionGranted() {
                             Intent intent;
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                intent = new Intent(MainActivity.this, Camera2Activity.class);
-                            } else {
-                                new AlertDialog
-                                        .Builder(MainActivity.this)
-                                        .setTitle("不支持的 API Level")
-                                        .setMessage("Camera2 API 仅在 API Level 21 以上可用, 当前 API Level : " + Build.VERSION.SDK_INT)
-                                        .setPositiveButton("确定", (dialog, which) -> dialog.dismiss())
-                                        .show();
-                                return;
-                            }
-                            mFile = CommonUtils.createImageFile("mFile");
-                            //文件保存的路径和名称
-                            intent.putExtra("file", mFile.toString());
-                            //拍照时的提示文本
-                            intent.putExtra("hint", "请将证件放入框内。将裁剪图片，只保留框内区域的图像");
-                            //是否使用整个画面作为取景区域(全部为亮色区域)
-                            intent.putExtra("hideBounds", false);
-                            //最大允许的拍照尺寸（像素数）
-                            intent.putExtra("maxPicturePixels", 3840 * 2160);
-                            startActivityForResult(intent, App.TAKE_PHOTO_CUSTOM);
-                        }
-
-                        @Override
-                        public void onPermissionDenied(ArrayList<String> arrayList) {
-
-                        }
-                    }).setPermissions(new String[]{Manifest.permission.CAMERA})
-                    .check();
-        }else if(itemId==3){
-            new TedPermission(App.app)
-                    .setRationaleMessage("我们需要使用您设备上的相机以完成拍照。\n当 Android 系统请求将相机权限授予 HelloCamera2 时，请选择『允许』。")
-                    .setDeniedMessage("如果您不对 HelloCamera2 授予相机权限，您将不能完成拍照。")
-                    .setRationaleConfirmText("确定")
-                    .setDeniedCloseButtonText("关闭")
-                    .setGotoSettingButtonText("设定")
-                    .setPermissionListener(new PermissionListener() {
-                        @Override
-                        public void onPermissionGranted() {
-                            Intent intent;
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                                 intent = new Intent(MainActivity.this, Camera3Activity.class);
                             } else {
                                 new AlertDialog
@@ -214,6 +175,50 @@ public class MainActivity extends BaseActivity implements ActivityCompat.OnReque
                         }
                     }).setPermissions(new String[]{Manifest.permission.CAMERA})
                     .check();
+
+//            startActivityForResult(new Intent(Intent.ACTION_GET_CONTENT).setType("image/*"),300);
+        }else if(itemId==3){
+            new TedPermission(App.app)
+                    .setRationaleMessage("我们需要使用您设备上的相机以完成拍照。\n当 Android 系统请求将相机权限授予 HelloCamera2 时，请选择『允许』。")
+                    .setDeniedMessage("如果您不对 HelloCamera2 授予相机权限，您将不能完成拍照。")
+                    .setRationaleConfirmText("确定")
+                    .setDeniedCloseButtonText("关闭")
+                    .setGotoSettingButtonText("设定")
+                    .setPermissionListener(new PermissionListener() {
+                        @Override
+                        public void onPermissionGranted() {
+                            Intent intent;
+//                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            intent = new Intent(MainActivity.this, Camera3Activity.class);
+//                            } else {
+//                                new AlertDialog
+//                                        .Builder(MainActivity.this)
+//                                        .setTitle("不支持的 API Level")
+//                                        .setMessage("Camera2 API 仅在 API Level 21 以上可用, 当前 API Level : " + Build.VERSION.SDK_INT)
+//                                        .setPositiveButton("确定", (dialog, which) -> dialog.dismiss())
+//                                        .show();
+//                                return;
+//                            }
+//                            mFile = CommonUtils.createImageFile("mFile");
+                            mFile =new File(FileUtils.makeAppDir(),"mFile");///storage/emulated/0/DCIM/Camera/idcardImage
+                            Log.i("path",mFile.getPath()+"路径");
+                            //文件保存的路径和名称
+                            intent.putExtra("file", mFile.toString());
+                            //拍照时的提示文本
+                            intent.putExtra("hint", "请将证件放入框内。将裁剪图片，只保留框内区域的图像");
+                            //是否使用整个画面作为取景区域(全部为亮色区域)
+                            intent.putExtra("hideBounds", false);
+                            //最大允许的拍照尺寸（像素数）
+                            intent.putExtra("maxPicturePixels", 3840 * 2160);
+                            startActivityForResult(intent, App.TAKE_PHOTO_CUSTOM);
+                        }
+
+                        @Override
+                        public void onPermissionDenied(ArrayList<String> arrayList) {
+
+                        }
+                    }).setPermissions(new String[]{Manifest.permission.CAMERA})
+                    .check();
         }
         return true;
     }
@@ -224,13 +229,14 @@ public class MainActivity extends BaseActivity implements ActivityCompat.OnReque
         if (resultCode != RESULT_OK && resultCode != 200) return;
         if (requestCode == App.TAKE_PHOTO_CUSTOM) {
             mFile = new File(data.getStringExtra("file"));
+            Log.i("onActivityResult","路径"+mFile.getPath());
             Observable.just(mFile)
                       //将File解码为Bitmap
                       .map(file -> BitmapUtils.compressToResolution(file, 1920 * 1080))
                       //裁剪Bitmap
                       .map(BitmapUtils::crop)
                       //将Bitmap写入文件
-                      .map(bitmap -> BitmapUtils.writeBitmapToFile(bitmap, "mFile"))
+                      .map(bitmap -> BitmapUtils.writeBitmapToFile(bitmap,new File(FileUtils.makeAppDir()),String.valueOf(System.currentTimeMillis())))
                       .subscribeOn(Schedulers.io())
                       .observeOn(AndroidSchedulers.mainThread())
                       .subscribe(file -> {
@@ -248,7 +254,7 @@ public class MainActivity extends BaseActivity implements ActivityCompat.OnReque
             mFile = CommonUtils.createImageFile("mFile");
             Observable.just(mFile)
                       //读入File，压缩为指定大小的Bitmap
-                      .map(file -> BitmapUtils.compressToResolution(file, 1280 * 720))//1920 * 1080
+                      .map(file -> BitmapUtils.compressToResolution(file, 1280 * 720))//1280 * 720 1920 * 1080
                       //系统相机拍出的照片方向可能是竖的，这里判断如果是竖的，就旋转90度变为横向
                       .map(BitmapUtils::rotate)
                       //将Bitmap写入文件
@@ -269,8 +275,11 @@ public class MainActivity extends BaseActivity implements ActivityCompat.OnReque
         }
     }
 
+    private Display display;
+
     @Override
     protected int getContentViewResId() {
+        display = ((WindowManager) getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
         return R.layout.activity_main;
     }
 
@@ -283,6 +292,7 @@ public class MainActivity extends BaseActivity implements ActivityCompat.OnReque
     protected void onResume() {
         super.onResume();
 //        checkPermission();
+        Log.i("Path",App.app.getCacheDir()+"路径"+Environment.getExternalStorageDirectory());
     }
 
     @Override

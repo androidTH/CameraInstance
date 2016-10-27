@@ -33,31 +33,41 @@
             android:gravity="center_vertical">
 
             <View
-                android:layout_width="26dp"
                 android:id="@+id/view_camera_dark0"
+                android:layout_width="30dp"
                 android:layout_height="match_parent"
-                android:background="#8A000000"/>
+                android:background="#8A000000"
+                android:layout_weight="0.2"/>
 
             <LinearLayout
-                android:layout_width="448dp"
+                android:layout_width="298dp"
                 android:layout_height="match_parent"
                 android:id="@+id/view_camera_dark1"
                 android:orientation="vertical"
+                android:layout_weight="1"
                 android:gravity="center_horizontal">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="#8A000000"
+                    android:id="@+id/topview" />
+                    <!--android:layout_weight="0.2"-->
 
                 <TextView
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
+                    android:layout_height="wrap_content"
                     android:background="#8A000000"
                     android:gravity="center"
                     android:textSize="14sp"
                     android:textColor="@color/colorPrimary"
-                    android:id="@+id/tv_camera_hint"/>
+                    android:id="@+id/tv_camera_hint"
+                    android:visibility="gone"/>
 
                 <FrameLayout
+                    android:id="@+id/framelayout"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1">
+                    android:layout_height="448dp">
 
                     <View
                         android:layout_width="3dp"
@@ -108,37 +118,36 @@
                         android:background="@color/colorPrimary"/>
 
                 </FrameLayout>
-
-                <View
+                <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="26dp"
-                    android:background="#8A000000"/>
+                    android:layout_height="80dp"
+                    android:layout_weight="0.3"
+                    android:background="#8A000000">
+                    <ImageView
+                        android:id="@+id/iv_camera_button"
+                        android:layout_width="72dp"
+                        android:layout_height="72dp"
+                        android:layout_gravity="center"
+                        android:layout_centerInParent="true"
+                        android:layout_marginBottom="500dp"
+                        android:src="@drawable/selector"/>
+                </RelativeLayout>
+                <!--<View-->
+                    <!--android:layout_width="match_parent"-->
+                    <!--android:layout_height="100dp"-->
+                    <!--android:layout_weight="0.3"-->
+                    <!--android:id="@+id/view2" />-->
 
             </LinearLayout>
 
             <View
-                android:layout_width="0dp"
-                android:layout_weight="1"
+                android:layout_width="30dp"
                 android:layout_height="match_parent"
+                android:layout_weight="0.2"
                 android:background="#8A000000"/>
 
         </LinearLayout>
 
-
-        <ImageView
-            android:id="@+id/iv_camera_button"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:layout_gravity="center_vertical|left"
-            android:layout_marginLeft="500dp"
-            android:src="@drawable/selector"/>
-        <ImageView
-            android:id="@+id/iv_camera_switch"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:layout_gravity="left"
-            android:layout_marginLeft="500dp"
-            android:src="@drawable/selector"/>
     </FrameLayout>
 
 </android.support.design.widget.CoordinatorLayout>

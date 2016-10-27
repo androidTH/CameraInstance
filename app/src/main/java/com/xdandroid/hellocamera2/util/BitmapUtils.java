@@ -18,7 +18,7 @@ public class BitmapUtils {
     }
 
     /**
-     * 将拍照得到的图片按照取景框（亮色区域）的范围进行裁剪.
+     * 将拍照得到的图片按照取景框（亮色区域）的范围进行裁剪.1585*1000
      * 对于1280x720的屏幕，裁剪起始点为坐标(52, 80)，裁剪后，位图尺寸为896x588.（由layout xml定义的布局计算得到）
      * 以上参数将按照图片的实际大小，进行等比例换算。
      * 设备有无虚拟导航栏均能裁剪到正确的区域。
@@ -40,12 +40,13 @@ public class BitmapUtils {
         double scaleY = originalHeight / 720;
         Log.i("BitmapUtils_Crop",scaleY+"缩放比"+scaleX+"高度"+originalHeight+"宽度"+originalWidth);
         //在1280x720的设计图上，裁剪起点坐标(52, 80)
-        int x = (int) (52 * scaleX + 0.5);
-        int y = (int) (80 * scaleY + 0.5);
-        //在1280x720的设计图上，裁剪区域大小为896x588
+        int x = (int) (100 * scaleX + 0.5);//52
+        int y = (int) (62 * scaleY + 0.5);//100
+        //在1280x720的设计图上，裁剪区域大小为896x588   1920 * 1080
         int width = (int) (896 * scaleX + 0.5);
-        int height = (int) (588 * scaleY + 0.5);
-        return Bitmap.createBitmap(originalBitmap, x, y, width, height);
+        int height = (int) (599 * scaleY + 0.5);
+        Log.i("BitmapUtils_Crop","宽高"+width+"*"+height+"x="+x+"y="+y);
+        return Bitmap.createBitmap(originalBitmap,x,y,width, height);
     }
 
     /**
@@ -80,8 +81,11 @@ public class BitmapUtils {
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(filePath.toString(), options);
         double compressRatio = calculateCompressRatioBySquare(options, reqSquarePixels);
+        options.inJustDecodeBounds=false;
+        options.inPreferredConfig = Bitmap.Config.RGB_565;
         //解析原图
-        Bitmap fullBitmap = BitmapFactory.decodeFile(filePath.toString());
+        Bitmap fullBitmap = BitmapFactory.decodeFile(filePath.toString(),options);
+        Log.i("compressToResolution","宽高"+options.outWidth+"*"+options.outHeight);
         //创建缩放的Bitmap。这里不用inSampleSize，inSampleSize基于向下采样，节省了Bitmap读入后占用的内存，但Bitmap本身的像素还是那么多，文件大小没有改变。
         return Bitmap.createScaledBitmap(fullBitmap, (int) (options.outWidth / compressRatio), (int) (options.outHeight / compressRatio), false);
     }
@@ -117,6 +121,28 @@ public class BitmapUtils {
         File dir = new File(App.app.getCacheDir(), "images");
         if (!dir.exists()) dir.mkdirs();
         File file = new File(dir, fileName);
+        Log.i("writeBitmapToFile","宽"+bitmap.getWidth()+"高"+bitmap.getHeight());
+        FileOutputStream fos;
+        try {
+            if (file.exists()) file.delete();
+            fos = new FileOutputStream(file);
+            //JPEG为硬件加速，O(1)时间复杂度，而PNG为O(n)，速度要慢很多，WEBP不常用
+            //90%的品质已高于超精细(85%)的标准，已非常精细
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos);
+            fos.flush();
+            bitmap.recycle();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return file;
+    }
+
+    public static File writeBitmapToFile(Bitmap bitmap,File dir, String fileName) {
+        //FileProvider中指定的目录
+        if (!dir.exists()) dir.mkdirs();
+        File file = new File(dir, fileName+".jpg");
+        Log.i("writeBitmapToFile","宽"+bitmap.getWidth()+"高"+bitmap.getHeight());
         FileOutputStream fos;
         try {
             if (file.exists()) file.delete();

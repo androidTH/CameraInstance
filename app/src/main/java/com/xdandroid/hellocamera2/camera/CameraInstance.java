@@ -7,11 +7,15 @@ import android.hardware.Camera;
 import android.os.Build;
 import android.util.Log;
 
+import com.xdandroid.hellocamera2.util.CameraUtils;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import static android.content.ContentValues.TAG;
 
 public class CameraInstance {
     public static final String LOG_TAG = CameraInstance.class.getSimpleName();
@@ -25,7 +29,7 @@ public class CameraInstance {
     private Camera.Parameters mParams;
 
     private boolean mIsPreviewing = false;
-    private int mDefaultCameraID = -1;
+    private int mDefaultCameraID = 0;
     private int mFacing = 0;
 
     private int mPreviewWidth;
@@ -79,20 +83,7 @@ public class CameraInstance {
 
     public synchronized boolean tryOpenCamera(CameraOpenCallback callback, int facing) {
         Log.i(LOG_TAG, "try open camera...");
-
         try {
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.FROYO) {
-                int numberOfCameras = Camera.getNumberOfCameras();
-
-                Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-                for (int i = 0; i < numberOfCameras; i++) {
-                    Camera.getCameraInfo(i, cameraInfo);
-                    if (cameraInfo.facing == facing) {
-                        mDefaultCameraID = i;
-                        mFacing = facing;
-                    }
-                }
-            }
             stopPreview();
             if (mCameraDevice != null)
                 mCameraDevice.release();
@@ -156,7 +147,6 @@ public class CameraInstance {
         Log.i(LOG_TAG, "Camera startPreview...");
         if (mIsPreviewing) {
             Log.e(LOG_TAG, "Err: camera is previewing...");
-//            stopPreview();
             return;
         }
 
@@ -208,28 +198,6 @@ public class CameraInstance {
         return camInfo.orientation;
     }
 
-    //保证从大到小排列
-    private Comparator<Camera.Size> comparatorBigger = new Comparator<Camera.Size>() {
-        @Override
-        public int compare(Camera.Size lhs, Camera.Size rhs) {
-            int w = rhs.width - lhs.width;
-            if (w == 0)
-                return rhs.height - lhs.height;
-            return w;
-        }
-    };
-
-    //保证从小到大排列
-    private Comparator<Camera.Size> comparatorSmaller = new Comparator<Camera.Size>() {
-        @Override
-        public int compare(Camera.Size lhs, Camera.Size rhs) {
-            int w = lhs.width - rhs.width;
-            if (w == 0)
-                return lhs.height - rhs.height;
-            return w;
-        }
-    };
-
     public void initCamera() {
         if (mCameraDevice == null) {
             Log.e(LOG_TAG, "initCamera: Camera is not opened!");
@@ -237,38 +205,24 @@ public class CameraInstance {
         }
 
         mParams = mCameraDevice.getParameters();
-//        List<Integer> supportedPictureFormats = mParams.getSupportedPictureFormats();
-
-//        for (int fmt : supportedPictureFormats) {
-//            Log.i(LOG_TAG, String.format("Picture Format: %x", fmt));
-//        }
 
         mParams.setPictureFormat(PixelFormat.JPEG);
 
         List<Camera.Size> picSizes = mParams.getSupportedPictureSizes();
-        Camera.Size picSz = getBestSize(picSizes,mPictureWidth,mPictureHeight);
+        Log.i(TAG,"宽高"+mPictureWidth+"*"+mPictureHeight);
+        Camera.Size picSz = findBestSize(true,picSizes,mPictureWidth*mPictureHeight);
 
         List<Camera.Size> prevSizes = mParams.getSupportedPreviewSizes();
-        Camera.Size prevSz = getBestSize(prevSizes,mPreviewWidth,mPreviewHeight);;
-
-//        List<Integer> frameRates = mParams.getSupportedPreviewFrameRates();
-//        int fpsMax = 0;
-//        for (Integer n : frameRates) {
-//            Log.i(LOG_TAG, "Supported frame rate: " + n);
-//            if (fpsMax < n) {
-//                fpsMax = n;
-//            }
-//        }
+        Camera.Size prevSz = findBestSize(false,prevSizes,mPreferPreviewWidth*mPreferPreviewHeight); //getBestSize(prevSizes,mPreviewWidth,mPreviewHeight);;
 
         mParams.setPreviewSize(prevSz.width, prevSz.height);
         mParams.setPictureSize(picSz.width, picSz.height);
 
         List<String> focusModes = mParams.getSupportedFocusModes();
         if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
-            mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+            mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);//自动聚焦
         }
         mParams.setPreviewFrameRate(DEFAULT_PREVIEW_RATE); //设置相机预览帧率
-//        mParams.setPreviewFpsRange(20, 60);
 
         try {
             mCameraDevice.setParameters(mParams);
@@ -287,18 +241,6 @@ public class CameraInstance {
         Log.i(LOG_TAG, String.format("Camera Picture Size: %d x %d", szPic.width, szPic.height));
         Log.i(LOG_TAG, String.format("Camera Preview Size: %d x %d", szPrev.width, szPrev.height));
     }
-
-    public synchronized Camera.Size  getBestSize(List<Camera.Size> sizeArray,int width,int height){
-        Collections.sort(sizeArray, comparatorBigger);
-        Camera.Size mBestSize=null;
-        for (Camera.Size sz : sizeArray) {
-//            Log.i(LOG_TAG, String.format("Supported preview size: %d x %d", sz.width, sz.height));
-            if (sizeArray == null || (sz.width >= mPreferPreviewWidth && sz.height >= mPreferPreviewHeight)) {
-                mBestSize = sz;
-            }
-        }
-        return mBestSize;
-    };
 
     public synchronized void setFocusMode(String focusMode) {
 
@@ -351,7 +293,7 @@ public class CameraInstance {
 
             try {
                 mCameraDevice.cancelAutoFocus();
-                mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);// params.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
                 mParams.setFocusAreas(meteringAreas);
                 mCameraDevice.setParameters(mParams);
                 mCameraDevice.autoFocus(callback);
@@ -367,4 +309,51 @@ public class CameraInstance {
             }
         }
     }
+
+    public  int compares(int lhs, int rhs) {
+        return lhs < rhs ? -1 : (lhs == rhs ? 0 : 1);
+    }
+
+    /**
+     * 判断是否是16：9的Size, 允许误差5%.
+     *
+     * @param size Size
+     * @return 是否是16：9的Size
+     */
+    public  boolean isWide(Camera.Size size) {
+        double ratio = ((double) size.width) / ((double) size.height);
+        return ratio > 1.68 && ratio < 1.87;
+    }
+
+    public Camera.Size findBestSize(boolean forTakingPicture,List<Camera.Size> sizeList, long maxPicturePixels) {
+        List<Camera.Size> tooLargeSizes = new ArrayList<>();
+
+        Collections.sort(sizeList, new Comparator<Camera.Size>() {
+            @Override
+            public int compare(Camera.Size o1, Camera.Size o2) {
+                return compares(o1.width*o1.height, o2.width*o2.height);
+            }
+        });
+
+        boolean notTooLarge;
+        for (Camera.Size size : sizeList) {
+            if (isWide(size)) {
+                if (forTakingPicture) {
+                    //若是为了拍摄照片，则尺寸不要超过指定的maxPicturePixels.
+                    Log.i("screenSize", size.width+"*"+size.height+"最大" + maxPicturePixels);
+                    notTooLarge = ((long) size.width) * ((long) size.height) < maxPicturePixels;
+                }else{
+                    Log.i("screenSize", size.width+"*"+size.height+"最大" + maxPicturePixels);
+                    notTooLarge = ((long) size.width) * ((long) size.height) < 1920 * 1080;//1280 * 720
+                }
+                if (!notTooLarge) tooLargeSizes.add(size);
+            }
+        }
+
+        if (tooLargeSizes.size() > 0) {
+            return tooLargeSizes.get(0);
+        }
+        Log.i("findBestSize",tooLargeSizes.toString());
+        return sizeList.get(0);
+    };
 }

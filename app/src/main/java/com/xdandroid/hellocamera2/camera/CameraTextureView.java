@@ -16,10 +16,8 @@ public class CameraTextureView extends TextureView implements TextureView.Surfac
     private static final String TAG =CameraTextureView.class.getSimpleName();
     private SurfaceTexture mSurfaceTexture;
 
-    //protected int mRecordWidth = 720;
-    //protected int mRecordHeight = 1280;
-    public int maxPreviewWidth = 1280;
-    public int maxPreviewHeight = 1280;
+    public int maxPreviewWidth = 1920;
+    public int maxPreviewHeight = 1920;
     public int mSurfacewidth;
     private CaptureConfiguration mCaptureConfiguration;
 
@@ -41,7 +39,7 @@ public class CameraTextureView extends TextureView implements TextureView.Surfac
         if (!cameraInstance().isCameraOpened()) {
             Log.i(TAG,mCaptureConfiguration.getVideoWidth()+"宽"+mCaptureConfiguration.getVideoHeight()+"高");
             setRecordingSize(mCaptureConfiguration.getVideoWidth(), mCaptureConfiguration.getVideoHeight());
-            if (!cameraInstance().tryOpenCamera(null, getFacing())) {
+            if (!cameraInstance().tryOpenCamera(null,CameraInstance.CAMERA_BACK)) {
                 Log.e(TAG, "相机启动失败!!");
             }
         }
@@ -200,7 +198,7 @@ public class CameraTextureView extends TextureView implements TextureView.Surfac
     }
 
     private CaptureConfiguration createCaptureConfiguration() {
-        final PredefinedCaptureConfigurations.CaptureResolution resolution = getResolution(1);
+        final PredefinedCaptureConfigurations.CaptureResolution resolution = getResolution(0);
         final PredefinedCaptureConfigurations.CaptureQuality quality = getQuality(2);
         int fileDuration = CaptureConfiguration.NO_DURATION_LIMIT;
         int fileSize = CaptureConfiguration.NO_FILESIZE_LIMIT;

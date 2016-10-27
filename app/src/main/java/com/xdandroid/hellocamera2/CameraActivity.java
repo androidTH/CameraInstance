@@ -31,6 +31,7 @@ public class CameraActivity extends BaseCameraActivity {
     @BindView(R.id.tv_camera_hint) TextView tvCameraHint;
     @BindView(R.id.view_camera_dark0) View viewDark0;
     @BindView(R.id.view_camera_dark1) LinearLayout viewDark1;
+    @BindView(R.id.framelayout) FrameLayout mFrameLayout;
 
     private File file;
     private Camera mCamera;
@@ -135,6 +136,16 @@ public class CameraActivity extends BaseCameraActivity {
                       flCameraPreview.addView(mPreview);
                       initParams();
                   });
+        mFrameLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int[] location = new int[2];
+                mFrameLayout.getLocationOnScreen(location);
+                int x = location[0];
+                int y = location[1];
+                Log.i("getViewTreeObserver","viewDark0x="+x+"y="+y+"width="+mFrameLayout.getWidth()+"height="+mFrameLayout.getHeight());
+            }
+        });
     }
 
     private void initParams() {
@@ -163,7 +174,7 @@ public class CameraActivity extends BaseCameraActivity {
                 params.setPreviewSize(size.width, size.height);
                 if (pictureBestFound) initFocusParams(params);
             }
-        }, 1280 * 720);//1920 * 1080
+        },1920 * 1080);//1920 * 1080
         //寻找最佳拍照尺寸，即满足16:9比例，且不超过maxPicturePixels指定的像素数的最大Size;若找不到，则使用满足16:9的最大尺寸.
         //若仍找不到，使用最大尺寸;详见CameraUtils.findBestSize方法.
         CameraUtils  pictureUtils = new CameraUtils();
@@ -172,11 +183,20 @@ public class CameraActivity extends BaseCameraActivity {
             @Override
             public void onBestSizeFound(Camera.Size size) {
                 pictureBestFound = true;
-                Log.i(TAG,"宽="+size.width+"高"+size.height);
+                Log.i(TAG,"s宽="+size.width+"高"+size.height);
                 params.setPictureSize(size.width, size.height);
                 if (previewBestFound) initFocusParams(params);
             }
-        }, mMaxPicturePixels);
+        }, 1920*1080);//mMaxPicturePixels
+//        CameraUtils.findBestSize(true,pictureSizes,1920*1080,pictureUtils.new OnBestSizeFoundCallback(){
+//            @Override
+//            public void onBestSizeFound(Camera.Size size) {
+//                pictureBestFound = true;
+//                Log.i(TAG,"s宽="+size.width+"高"+size.height);
+//                params.setPictureSize(size.width, size.height);
+//                if (previewBestFound) initFocusParams(params);
+//            }
+//        });
     }
 
     private void initFocusParams(Camera.Parameters params) {

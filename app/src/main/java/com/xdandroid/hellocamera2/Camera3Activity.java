@@ -3,30 +3,23 @@ package com.xdandroid.hellocamera2;
 import android.hardware.Camera;
 import android.util.Log;
 import android.view.Display;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.jakewharton.rxbinding.view.RxView;
 import com.xdandroid.hellocamera2.app.App;
 import com.xdandroid.hellocamera2.app.BaseCameraActivity;
 import com.xdandroid.hellocamera2.camera.CameraTextureView;
-import com.xdandroid.hellocamera2.util.CameraUtils;
-import com.xdandroid.hellocamera2.view.CameraPreview;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
-import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
 /**
  * Camera API. Android KitKat 及以前版本的 Android 使用 Camera API.
@@ -40,10 +33,13 @@ public class Camera3Activity extends BaseCameraActivity {
     @BindView(R.id.tv_camera_hint) TextView tvCameraHint;
     @BindView(R.id.view_camera_dark0) View viewDark0;
     @BindView(R.id.view_camera_dark1) LinearLayout viewDark1;
+    @BindView(R.id.framelayout) FrameLayout mFrameLayout;
     @BindView(R.id.camera_textureview)
     public CameraTextureView mCameraTextureView;
-    @BindView(R.id.iv_camera_switch)
-    public ImageView mIvCameraSwitch;
+    @BindView(R.id.topview)
+    public View mTopView;
+//    @BindView(R.id.iv_camera_switch)
+//    public ImageView mIvCameraSwitch;
 
     private File file;
     private long mMaxPicturePixels;
@@ -73,7 +69,7 @@ public class Camera3Activity extends BaseCameraActivity {
     @Override
     protected void preInitData() {
         Display display = ((WindowManager) getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
-        Log.i(TAG,"手机分辨率"+display.getWidth()+"*"+display.getHeight());
+        Log.i("getViewTreeObserver","手机分辨率"+display.getWidth()+"*"+display.getHeight());
 //        display.getOrientation();
         file = new File(getIntent().getStringExtra("file"));
         tvCameraHint.setText(getIntent().getStringExtra("hint"));
@@ -81,8 +77,8 @@ public class Camera3Activity extends BaseCameraActivity {
             viewDark0.setVisibility(View.INVISIBLE);
             viewDark1.setVisibility(View.INVISIBLE);
         }
-        mMaxPicturePixels = getIntent().getIntExtra("maxPicturePixels", 1280 * 720);//3840 * 2160
-        initCamera();
+        mMaxPicturePixels = getIntent().getIntExtra("maxPicturePixels", 1920 * 1080);//3840 * 2160
+//        initCamera();
         ivCameraButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -110,15 +106,48 @@ public class Camera3Activity extends BaseCameraActivity {
         flCameraPreview.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mCameraTextureView.cameraInstance().focusAtPoint();
+//                mCameraTextureView.cameraInstance().focusAtPoint();
             }
         });
-        mIvCameraSwitch.setOnClickListener(new View.OnClickListener() {
+        mTopView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
-            public void onClick(View v) {
-                mCameraTextureView.switchCamera();
+            public void onGlobalLayout() {
+                int[] location = new int[2];
+                mTopView.getLocationOnScreen(location);
+                int x = location[0];
+                int y = location[1];
+                Log.i("getViewTreeObserver","mTopView左边坐标="+x+"y="+y+"width="+mTopView.getWidth()+"height="+mTopView.getHeight());
             }
         });
+
+        mFrameLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int[] location = new int[2];
+                mFrameLayout.getLocationOnScreen(location);
+                int x = location[0];
+                int y = location[1];
+                Log.i("getViewTreeObserver","viewDark0x="+x+"y="+y+"width="+mFrameLayout.getWidth()+"height="+mFrameLayout.getHeight());
+            }
+        });
+        mFrameLayout.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                mCameraTextureView.focusAtPoint(event.getX(), event.getY(), new Camera.AutoFocusCallback() {
+                    @Override
+                    public void onAutoFocus(boolean success, Camera camera) {
+                        Log.i("focusAtPoint","onclick"+success);
+                    }
+                });
+                return false;
+            }
+        });
+//        mIvCameraSwitch.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                mCameraTextureView.switchCamera();
+//            }
+//        });
     }
 
     private void initCamera() {

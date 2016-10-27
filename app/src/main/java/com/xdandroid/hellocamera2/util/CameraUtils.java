@@ -59,6 +59,10 @@ public class CameraUtils {
         return lhs < rhs ? -1 : (lhs == rhs ? 0 : 1);
     }
 
+    public static int compares(int lhs, int rhs) {
+        return lhs < rhs ? -1 : (lhs == rhs ? 0 : 1);
+    }
+
     /**
      * 判断是否是16：9的Size, 允许误差5%.
      *
@@ -69,6 +73,71 @@ public class CameraUtils {
         double ratio = ((double) size.width) / ((double) size.height);
         return ratio > 1.68 && ratio < 1.87;
     }
+
+
+    public static void findBestSize(boolean forTakingPicture,List<Camera.Size> sizeList, long maxPicturePixels, OnBestSizeFoundCallback callback) {
+        List<Camera.Size> tooLargeSizes = new ArrayList<>();
+
+        Collections.sort(sizeList, new Comparator<Camera.Size>() {
+            @Override
+            public int compare(Camera.Size o1, Camera.Size o2) {
+                return compares(o1.width*o1.height, o2.width*o2.height);
+            }
+        });
+
+        boolean notTooLarge;
+        for (Camera.Size size : sizeList) {
+            if (isWide(size)) {
+                Log.i("screenSize", "size的宽=" + size.width + "高=" + size.height);
+                Log.i("screenSize", "最大" + maxPicturePixels);
+                if (forTakingPicture) {
+                    //若是为了拍摄照片，则尺寸不要超过指定的maxPicturePixels.
+                    notTooLarge = ((long) size.width) * ((long) size.height) <= maxPicturePixels;
+                } else {
+                    //若只是为了预览，则尺寸不要超过1920x1080，否则相机带宽吃紧，这也是Camera2 API的要求.
+                    notTooLarge = ((long) size.width) * ((long) size.height) <= 1920 * 1080;//1280 * 720
+                }
+                if (!notTooLarge) tooLargeSizes.add(size);
+            }
+        }
+        if (tooLargeSizes.size() > 0) {
+            callback.bestSizeJustFound(tooLargeSizes.get(0));
+        } else {
+            callback.bestSizeJustFound(sizeList.get(0));
+        }
+    };
+
+    public static Camera.Size findBestSize(boolean forTakingPicture,List<Camera.Size> sizeList, long maxPicturePixels) {
+        List<Camera.Size> tooLargeSizes = new ArrayList<>();
+
+        Collections.sort(sizeList, new Comparator<Camera.Size>() {
+            @Override
+            public int compare(Camera.Size o1, Camera.Size o2) {
+                return compares(o1.width*o1.height, o2.width*o2.height);
+            }
+        });
+
+        boolean notTooLarge;
+        for (Camera.Size size : sizeList) {
+            if (isWide(size)) {
+                if (forTakingPicture) {
+                    //若是为了拍摄照片，则尺寸不要超过指定的maxPicturePixels.
+                    Log.i("screenSize", size.width+"*"+size.height+"最大" + maxPicturePixels);
+                    notTooLarge = ((long) size.width) * ((long) size.height) < maxPicturePixels;
+                }else{
+                    Log.i("screenSize", size.width+"*"+size.height+"最大" + maxPicturePixels);
+                    notTooLarge = ((long) size.width) * ((long) size.height) < 1920 * 1080;//1280 * 720
+                }
+                if (!notTooLarge) tooLargeSizes.add(size);
+            }
+        }
+
+        if (tooLargeSizes.size() > 0) {
+            return tooLargeSizes.get(0);
+        }
+        Log.i("findBestSize",tooLargeSizes.toString());
+        return sizeList.get(0);
+    };
 
     /**
      * 从sizeArray中找到满足16:9比例，且不超过maxPicturePixels指定的像素数的最大Size.
@@ -102,14 +171,14 @@ public class CameraUtils {
 //                    for(int i=0;i<sizeList.size();i++){
 //                        Log.i("screenSize","宽"+sizeList.get(i).width+"高"+sizeList.get(i).height);
 //                    }
-                    Log.i("screenSize","size的宽="+size.width+"高="+size.height);
-                    Log.i("screenSize","最大"+maxPicturePixels);
+                    Log.i("screenSize", "size的宽=" + size.width + "高=" + size.height);
+                    Log.i("screenSize", "最大" + maxPicturePixels);
                     if (forTakingPicture) {
                         //若是为了拍摄照片，则尺寸不要超过指定的maxPicturePixels.
                         notTooLarge = ((long) size.width) * ((long) size.height) <= maxPicturePixels;
                     } else {
                         //若只是为了预览，则尺寸不要超过1920x1080，否则相机带宽吃紧，这也是Camera2 API的要求.
-                        notTooLarge = ((long) size.width) * ((long) size.height) <= 1280 * 720;//1920 * 1080
+                        notTooLarge = ((long) size.width) * ((long) size.height) <= 1920 * 1080;//1280 * 720
                     }
                     if (!notTooLarge) tooLargeSizes.add(size);
                     return notTooLarge;
@@ -125,7 +194,7 @@ public class CameraUtils {
                         },
                         () -> {
                             if (tooLargeSizes.size() > 0) {
-                                callback.bestSizeJustFound(tooLargeSizes.get(0));
+                                callback.bestSizeJustFound(tooLargeSizes.get(tooLargeSizes.size() - 1));
                             } else {
                                 callback.bestSizeJustFound(sizeList.get(0));
                             }
