@@ -1,6 +1,7 @@
 package com.xdandroid.hellocamera2;
 
 import android.*;
+import android.Manifest;
 import android.content.*;
 import android.content.pm.*;
 import android.net.*;
@@ -24,6 +25,7 @@ import com.xdandroid.hellocamera2.util.*;
 import java.io.*;
 import java.security.Permission;
 import java.util.*;
+import java.util.jar.*;
 
 import butterknife.*;
 import rx.Observable;
@@ -291,7 +293,7 @@ public class MainActivity extends BaseActivity implements ActivityCompat.OnReque
     @Override
     protected void onResume() {
         super.onResume();
-//        checkPermission();
+        checkPermission();
         Log.i("Path",App.app.getCacheDir()+"路径"+Environment.getExternalStorageDirectory().getPath()+
                 "路径"+getExternalCacheDir().getPath()+"路径"+getCacheDir().getPath()+"路径="+getFilesDir());
     }
@@ -310,14 +312,13 @@ public class MainActivity extends BaseActivity implements ActivityCompat.OnReque
     }
 
     private void checkPermission() {
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.CALL_PHONE)
-                != PackageManager.PERMISSION_GRANTED) {
-
+        int perm=ContextCompat.checkSelfPermission(this,Manifest.permission.CALL_PHONE);
+        Log.i("checkPermission","perm="+perm);
+        if (perm!= PackageManager.PERMISSION_GRANTED) {
             // Should we show an explanation?
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.CALL_PHONE)) {
-
+              Log.i("checkPermission","yes");
                 // Show an expanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user's response! After the user
                 // sees the explanation, try again to request the permission.
@@ -325,7 +326,7 @@ public class MainActivity extends BaseActivity implements ActivityCompat.OnReque
             } else {
 
                 // No explanation needed, we can request the permission.
-
+                Log.i("checkPermission","no");
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.CALL_PHONE},1);
 
