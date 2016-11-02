@@ -36,9 +36,11 @@ public class MainActivity extends BaseActivity implements ActivityCompat.OnReque
 
     @BindView(R.id.iv) SimpleDraweeView iv;
     @BindView(R.id.btn_takepicture) Button btnTakepicture;
+    @BindView(R.id.btn_lightornight) Button mBtnLightOrNight;
 
     private File mFile;
     private boolean mHasSelectedOnce;
+
 
     @OnClick(R.id.iv)
     void onImageViewClick(View v) {
@@ -60,6 +62,18 @@ public class MainActivity extends BaseActivity implements ActivityCompat.OnReque
     @OnClick(R.id.btn_takepicture)
     void onTakepictureClick(View v) {
         openContextMenu(v);
+    }
+
+    @OnClick(R.id.btn_lightornight)
+    public void onLightOrNight(View view){
+        if (SharedPreferencesUtil.getInstance().getBoolean(App.ISNIGHT, false)) {
+            SharedPreferencesUtil.getInstance().putBoolean(App.ISNIGHT, false);
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        } else {
+            SharedPreferencesUtil.getInstance().putBoolean(App.ISNIGHT, true);
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        }
+        recreate();
     }
 
     @Override
